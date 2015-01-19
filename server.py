@@ -32,11 +32,14 @@ import os.path
 class MyWebServer(SocketServer.BaseRequestHandler):
     
     def handle(self):
+	#get the requested address
         self.data = self.request.recv(1024).strip()
 	address=self.data.split()[1]
 	limit=os.getcwd()+"/www"
 	requested=os.path.abspath(os.getcwd()+"/www"+address)
+	#check that it is not below www
 	if (limit==os.path.commonprefix([requested,limit])):
+		#check if it is a file and serve it up
 		if os.path.isfile(os.getcwd()+"/www"+address):
 			send=''
 			f=open(os.getcwd()+"/www"+address)
@@ -47,6 +50,7 @@ class MyWebServer(SocketServer.BaseRequestHandler):
 				send+=line
 				line=f.read(1024)
 			self.request.sendall(send)
+		#check if it is a directory and serve it up
 		elif (address.endswith("/")==True):
 			if os.path.isdir(os.getcwd()+"/www"+address):
 				olddir=os.getcwd()
@@ -64,13 +68,12 @@ class MyWebServer(SocketServer.BaseRequestHandler):
 					line=f.read(1024)
 				self.request.sendall(send)
 				os.chdir(olddir)
+		#send 404 error
 		else:
-			print("heres")	
 			self.request.sendall("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\n 404 Not Found")			
 				
 	else:	
-		self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n")
-
+		self.request.sendall("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\n 404 Not Found")		
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
 
