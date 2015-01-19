@@ -1,7 +1,9 @@
 import SocketServer
+import os.path
+
 # coding: utf-8
 
-# Copyright 2013 Abram Hindle, Eddie Antonio Santos
+# Copyright 2013 Abram Hindle, Eddie Antonio Santos, Ashley Fegan
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +19,7 @@ import SocketServer
 #
 #
 # Furthermore it is derived from the Python documentation examples thus
-# some of the code is Copyright © 2001-2013 Python Software
+# some of the code is Copyright  2001-2013 Python Software
 # Foundation; All Rights Reserved
 #
 # http://docs.python.org/2/library/socketserver.html
@@ -31,8 +33,43 @@ class MyWebServer(SocketServer.BaseRequestHandler):
     
     def handle(self):
         self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall("OK")
+	address=self.data.split()[1]
+	limit=os.getcwd()+"/www"
+	requested=os.path.abspath(os.getcwd()+"/www"+address)
+	if (limit==os.path.commonprefix([requested,limit])):
+		if os.path.isfile(os.getcwd()+"/www"+address):
+			send=''
+			f=open(os.getcwd()+"/www"+address)
+			send="HTTP/1.1 200 OK\r\n"
+			send+=("Content-Type: text/%s\r\n\r\n" %address.split('.')[-1])
+			line=f.read(1024)
+			while(line):
+				send+=line
+				line=f.read(1024)
+			self.request.sendall(send)
+		elif (address.endswith("/")==True):
+			if os.path.isdir(os.getcwd()+"/www"+address):
+				olddir=os.getcwd()
+				send=''
+				os.chdir(os.getcwd()+"/www"+address)
+				address+="/index.html"
+				f=open(os.getcwd()+"/index.html")
+				
+				send="HTTP/1.1 200 OK\r\n"
+				send+="Content-Type: text/html\r\n\r\n"
+				
+				line=f.read(1024)
+				while(line):
+					send+=line
+					line=f.read(1024)
+				self.request.sendall(send)
+				os.chdir(olddir)
+		else:
+			print("heres")	
+			self.request.sendall("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\n 404 Not Found")			
+				
+	else:	
+		self.request.sendall("HTTP/1.1 404 Not Found\r\n\r\n")
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
