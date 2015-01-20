@@ -51,23 +51,27 @@ class MyWebServer(SocketServer.BaseRequestHandler):
 				line=f.read(1024)
 			self.request.sendall(send)
 		#check if it is a directory and serve it up
-		elif (address.endswith("/")==True):
-			if os.path.isdir(os.getcwd()+"/www"+address):
+		
+		elif os.path.isdir(os.getcwd()+"/www"+address):
+			if (address.endswith("/")==True):
 				olddir=os.getcwd()
 				send=''
 				os.chdir(os.getcwd()+"/www"+address)
-				address+="/index.html"
-				f=open(os.getcwd()+"/index.html")
-				
+				address+="/index.html"	
+				f=open(os.getcwd()+"/index.html")	
 				send="HTTP/1.1 200 OK\r\n"
 				send+="Content-Type: text/html\r\n\r\n"
-				
 				line=f.read(1024)
 				while(line):
 					send+=line
 					line=f.read(1024)
 				self.request.sendall(send)
 				os.chdir(olddir)
+			else:
+				
+				send="HTTP/1.1 301 redirect\r\n"
+				send+="Location: "+address+"/\r\n"
+				self.request.sendall(send)
 		#send 404 error
 		else:
 			self.request.sendall("HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\n 404 Not Found")			
